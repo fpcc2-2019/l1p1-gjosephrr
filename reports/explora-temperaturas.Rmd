@@ -23,7 +23,23 @@ glimpse(climas)
 
 ## Temperatura
 
+
 ### Onde é mais quente?
+
+* - O objetivo seria mostrar a distribuição da média de temperatura das duas cidades, mas notei muito trabalho para localizar alguns pontos (gem_jitter) e definir qual realmente é a mais quente, sabendo disso, o geom_quasirandom nos ajudou criando um aglomerado desses pontos, que por sua largura, mostra valores com maior registro sem deixar de responder rapidamente a pergunta feita.
+
+```{r}
+
+climas %>%
+    ggplot( aes(x = cidade, y = tmedia, color = cidade)) +
+    geom_quasirandom() + 
+    labs(title="Média de temperaturas Campina Grande e João Pessoa", 
+         subtitle="Dados de 1995 até 2018", 
+         caption="fonte: INMET",
+         y = "Temperatura em Cº",
+         x = "") 
+
+```
 
 
 ### As temperaturas máximas semanais (o pico do calor) são tão diferentes quanto as médias? Mais?  
@@ -34,15 +50,81 @@ glimpse(climas)
 
 ### Qual foi o São João  mais frio de CG que está nos nossos dados?
 
+* - Encontrei a necessidade de criar um ranking para responder a pergunta, nesse caso, a média das chuvas no periodo de junho na cidade de Campina Grande foi reordenada, facilitando assim, a comparação em relação a outros anos, uma outra opção seria criar uma timeline com o deslocamento dos pontos, mas faria com que o leitor passasse um tempo procurando e medindo os tamanhos dos segmentos apresentados.
+
+
+```{r}
+campina = climas %>%
+    filter(mes == 6 & cidade == "Campina Grande") %>%
+    group_by(ano) %>%
+    summarise(temp_media = mean(tmedia)) 
+
+ggplot(campina, aes(x=reorder(ano, temp_media), y=temp_media)) +
+    geom_segment( aes(x=reorder(ano, -temp_media), xend=reorder(ano,-temp_media), y=min(temp_media)- 0.3, yend=temp_media), color="skyblue", size=1) +
+    geom_point( color="blue", size=4, alpha=0.6) +
+    theme_light() +
+    coord_flip() +
+    theme(
+        panel.grid.major.y = element_blank(),
+        panel.border = element_blank(),
+        axis.ticks.y = element_blank()
+    ) +
+    labs(title="Temperatura no mês de Junho em Campina Grande", 
+         subtitle="Dados de 1995 até 2018", 
+         caption="fonte: INMET",
+         y = "Temperatura em Cº",
+         x = "Ano") 
+
+```
 
 
 ## Chuva
 
 ### Quanto chove por semana em JP e CG?
 
-Como é a distribuição do volume de chuvas por semana em JP e CG? A chuva varia mais ou menos que a temperatura? O formato da distribuição é igual? 
+* - Através da pergunta, interpretei o desejo de um detalhamento na apresentação dos dados de chuvas, apesar de ter separado por ano, a distribuição permite mostrar vários pontos relativos a cada cidade (cores diferentes), entendendo que um dado semanal pode ser visto em uma perspectiva anual mais dispersa.
+
+```{r}
+climas %>%
+    filter(ano >= 2008 & ano <= 2018) %>%
+    ggplot( aes(x = ano, y = chuva, color = cidade))+
+    geom_jitter(width = .3,alpha = .6)+
+    theme(
+        panel.grid.major.x = element_blank())+  
+   labs(title="Média Semanal de Chuvas em Campina e João Pessoa", 
+         subtitle="Dados de 2008 até 2018", 
+         caption="fonte: INMET",
+         y = "Chuvas em cm³",
+         x = element_blank())
+
+```
+
+###Como é a distribuição do volume de chuvas por semana em JP e CG? A chuva varia mais ou menos que a temperatura? O formato da distribuição é igual? 
 
 ### No geral, onde chove mais?
+
+* - Também foi utilizada a média neste caso, de modo mais simples o gráfico de barras foi empregado, a pergunta aparenta ser mais direta, acredito que esse tipo de gráfico seja mais preciso neste caso.
+
+```{r}
+
+cidades = climas %>%
+    group_by(Cidade = cidade) %>%
+    summarise(chuva_media = mean(chuva)) 
+
+ggplot(cidades, aes(x=Cidade, y = chuva_media, fill=Cidade)) +
+    geom_bar(stat = "identity") +
+    scale_fill_manual(values=c("#09c5f9", "#2a4789"))+
+    theme(
+        panel.grid.major.x = element_blank()
+    )+
+    labs(title="Média de Chuvas em Campina e João Pessoa", 
+         subtitle="Dados de 1995 até 2018", 
+         caption="fonte: INMET",
+         y = "Chuvas em cm³",
+         x = element_blank())
+
+```
+
 
 ### A distribuição é diferente em meses específicos? 
 
